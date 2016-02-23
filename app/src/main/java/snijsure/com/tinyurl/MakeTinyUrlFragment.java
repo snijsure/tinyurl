@@ -3,6 +3,7 @@ package snijsure.com.tinyurl;
 import android.app.Fragment;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -36,7 +37,10 @@ public class MakeTinyUrlFragment extends Fragment implements OnTaskResult {
         View v = inflater.inflate(R.layout.main_fragment, container, false);
         mUrlTextView = (EditText) v.findViewById(R.id.url_text_id);
         mActionButton = (Button) v.findViewById(R.id.ok_button_id);
-
+        mProgressDialog = new ProgressDialog(this.getActivity());
+        mProgressDialog.setMessage("Shortening URL");
+        mProgressDialog.setIndeterminate(true);
+        mProgressDialog.setCancelable(false);
         return v;
     }
 
@@ -63,6 +67,21 @@ public class MakeTinyUrlFragment extends Fragment implements OnTaskResult {
         super.onAttach(ctx);
         mContext = ctx;
 
+    }
+
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig){
+        super.onConfigurationChanged(newConfig);
+        if ( mProgressDialog != null )
+            mProgressDialog.show();
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if ( mProgressDialog != null )
+            mProgressDialog.dismiss();
     }
 
     // Check if object already exists in REALM database.
@@ -100,10 +119,7 @@ public class MakeTinyUrlFragment extends Fragment implements OnTaskResult {
                 onTaskSuccess(result);
             } else {
                 Log.d(TAG, "Shorten url " + str);
-                mProgressDialog = new ProgressDialog(this.getActivity());
-                mProgressDialog.setMessage("Shortening URL");
-                mProgressDialog.setIndeterminate(true);
-                mProgressDialog.setCancelable(false);
+
                 mProgressDialog.show();
                 ShortenUrlTask task = new ShortenUrlTask(str, this);
                 task.executeTask();
