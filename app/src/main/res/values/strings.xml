@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">TinyUrl</string>
+    <string name="title_text">Enter name of URL to shorten</string>
+    <string name="ok_button">Shorten!</string>
+    <string name="invalid_url_error">Invalid URL</string>
+    <string name="protocol_error_string">Protocol Error while retrieving dataL</string>
+    <string name="bad_url_error_string">Invalid URL</string>
+    <string name="io_error_string">I/O error while retrieving data</string>
+    <string name="result_title_string">Click Button below to Open URL</string>
+</resources>

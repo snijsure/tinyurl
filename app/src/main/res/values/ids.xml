@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item type="id" name="main_layout" />
+    <item type="id" name="main_fragment" />
+    <item type="id" name="ok_button_id" />
+    <item type="id" name="title_text_id" />
+    <item type="id" name="url_text_id" />
+    <item type="id" name="open_url_button_id" />
+    <item type="id" name="fragment_container" />
+
+</resources>
