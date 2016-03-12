@@ -14,8 +14,18 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import java.io.IOException;
+import java.util.List;
+
 import io.realm.Realm;
+import io.realm.RealmConfiguration;
 import io.realm.RealmResults;
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.GsonConverterFactory;
+import retrofit2.Response;
+import retrofit2.Retrofit;
 
 /**
  * Created by subodhnijsure on 2/8/16.
@@ -31,7 +41,7 @@ public class MakeTinyUrlFragment extends Fragment implements OnTaskResult {
     ProgressDialog mProgressDialog;
     Context mContext;
     Realm mRealm;
-
+    private RealmConfiguration realmConfig;
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.main_fragment, container, false);
@@ -50,14 +60,24 @@ public class MakeTinyUrlFragment extends Fragment implements OnTaskResult {
         mActionButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                shortenUrlClick();
+                try {
+                    shortenUrlClick();
+                }
+                catch(IOException e) {
+
+                }
             }
         });
         try {
-            mRealm = Realm.getInstance(getActivity());
-            Log.d(TAG, "Realm object is created");
+            realmConfig = new RealmConfiguration.Builder(mContext).build();
+            // Open the Realm for the UI thread.
+            mRealm = Realm.getInstance(realmConfig);
         }
         catch(io.realm.exceptions.RealmMigrationNeededException e) {
+            mRealm = null;
+        }
+        catch (Exception e) {
+            Log.d(TAG,"Exception while creating realm object " +e);
             mRealm = null;
         }
     }
@@ -109,7 +129,7 @@ public class MakeTinyUrlFragment extends Fragment implements OnTaskResult {
         }
     }
 
-    public void shortenUrlClick() {
+    public void shortenUrlClick() throws IOException {
         String str = mUrlTextView.getText().toString();
         if (URLUtil.isValidUrl(str)) {
             // This item already exists in our DB so need to save it
@@ -121,8 +141,35 @@ public class MakeTinyUrlFragment extends Fragment implements OnTaskResult {
                 Log.d(TAG, "Shorten url " + str);
 
                 mProgressDialog.show();
-                ShortenUrlTask task = new ShortenUrlTask(str, this);
-                task.executeTask();
+                Retrofit retrofit = new Retrofit.Builder()
+                        .baseUrl("http://tinyurl.com")
+                        .addConverterFactory(GsonConverterFactory.create())
+                        .build();
+                ShortenUrlInterface service = retrofit.create(ShortenUrlInterface.class);
+                Call <ResponseBody> call = service.doIt(str);
+                call.enqueue(new Callback<ResponseBody>() {
+                    @Override
+                    public void onResponse(Call<ResponseBody> call,
+                                           Response<ResponseBody> response) {
+                        try {
+                            if ( response.isSuccessful() ) {
+                                String responseString = response.body().string();
+                                onTaskSuccess(responseString);
+                            }
+                            else
+                                onTaskError();
+                        }
+                        catch(IOException e) {
+                            onTaskError();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<ResponseBody> call, Throwable t) {
+                        Log.d(TAG, "Throwable is " + t);
+                        onTaskError();
+                    }
+                });
             }
         } else {
             Toast.makeText(this.getActivity(), R.string.invalid_url_error,
@@ -135,7 +182,7 @@ public class MakeTinyUrlFragment extends Fragment implements OnTaskResult {
     @Override
     public void onTaskSuccess(String result) {
         String originalUrl;
-        Log.d(TAG, "Shorten Url task was successful");
+        Log.d(TAG, "Shorten Url task was successful result <" + result + ">");
         if (mProgressDialog != null)
             mProgressDialog.dismiss();
 
@@ -177,11 +224,10 @@ public class MakeTinyUrlFragment extends Fragment implements OnTaskResult {
 
 
     @Override
-    public void onTaskError(int id) {
-        Log.d(TAG, "Shorten Url task was failed error " + getResources().getString(id));
+    public void onTaskError() {
         if (mProgressDialog != null)
             mProgressDialog.dismiss();
-        Toast.makeText(this.getActivity(), getResources().getString(id),
+        Toast.makeText(this.getActivity(), getResources().getString(R.string.io_error_string),
                 Toast.LENGTH_SHORT).show();
     }
 }

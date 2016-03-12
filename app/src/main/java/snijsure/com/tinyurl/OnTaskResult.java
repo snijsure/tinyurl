@@ -5,5 +5,5 @@ package snijsure.com.tinyurl;
  */
 interface OnTaskResult {
     void onTaskSuccess(String result);
-    void onTaskError(int id);
+    void onTaskError();
 }
