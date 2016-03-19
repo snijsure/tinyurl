@@ -107,13 +107,17 @@ public class MakeTinyUrlFragment extends Fragment implements OnTaskResult {
     // Check if object already exists in REALM database.
     // Returns true if does else false.
     public boolean checkIfItemExistsInDb(final String searchString) {
-
-        RealmResults<TinyUrlDBEntry> results1 =
-                mRealm.where(TinyUrlDBEntry.class).equalTo("url", searchString).findAll();
-        if (results1.size() == 0) {
+        if ( mRealm != null ) {
+            RealmResults<TinyUrlDBEntry> results1 =
+                    mRealm.where(TinyUrlDBEntry.class).equalTo("url", searchString).findAll();
+            if (results1.size() == 0) {
+                return false;
+            } else {
+                return true;
+            }
+        }
+        else {
             return false;
-        } else {
-            return true;
         }
     }
 
